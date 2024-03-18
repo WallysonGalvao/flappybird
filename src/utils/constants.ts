@@ -1,3 +1,6 @@
+export const GRAVITY = 1000;
+export const JUMP_FORCE = -500;
+
 export const BIRD_SIZE = {
   width: 64,
   height: 48,
