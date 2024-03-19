@@ -1,26 +1,38 @@
 import { useWindowDimensions } from 'react-native';
 
+import { Group, Image, useImage } from '@shopify/react-native-skia';
 import {
-  AnimatedProp,
-  Group,
-  Image,
-  Transforms2d,
-  useImage,
-} from '@shopify/react-native-skia';
-import { SharedValue, useDerivedValue } from 'react-native-reanimated';
+  Extrapolation,
+  interpolate,
+  SharedValue,
+  useDerivedValue,
+} from 'react-native-reanimated';
 
 import birdImg from '@app/assets/sprites/yellowbird-upflap.png';
 import { BIRD_SIZE } from '@app/utils/constants';
 
 type BirdProps = {
-  transform: AnimatedProp<Transforms2d>;
+  velocity: SharedValue<number>;
   y: SharedValue<number>;
 };
 
-export const Bird = ({ transform, y }: BirdProps) => {
+export const Bird = ({ velocity, y }: BirdProps) => {
   const { width } = useWindowDimensions();
 
   const bird = useImage(birdImg);
+
+  const transform = useDerivedValue(() => {
+    return [
+      {
+        rotate: interpolate(
+          velocity.value,
+          [-500, 500],
+          [-0.5, 0.5],
+          Extrapolation.CLAMP,
+        ),
+      },
+    ];
+  });
 
   const origin = useDerivedValue(() => {
     return { x: width / 4 + 32, y: y.value + 24 };

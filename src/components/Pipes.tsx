@@ -1,10 +1,11 @@
+import { useWindowDimensions } from 'react-native';
+
 import { Image, useImage } from '@shopify/react-native-skia';
+import { SharedValue } from 'react-native-reanimated';
 
 import pipeTopImg from '@app/assets/sprites/pipe-green-top.png';
 import pipeBottomImg from '@app/assets/sprites/pipe-green.png';
 import { PIPE_SIZE } from '@app/utils/constants';
-import { useWindowDimensions } from 'react-native';
-import { SharedValue } from 'react-native-reanimated';
 
 const pipeOffset = 10;
 
