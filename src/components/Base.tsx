@@ -1,8 +1,9 @@
-import { Image, useImage } from "@shopify/react-native-skia";
+import { useWindowDimensions } from 'react-native';
 
-import baseImg from "@app/assets/sprites/base.png";
-import { useWindowDimensions } from "react-native";
-import { BASE_SIZE } from "@app/utils/constants";
+import { Image, useImage } from '@shopify/react-native-skia';
+
+import baseImg from '@app/assets/sprites/base.png';
+import { BASE_SIZE } from '@app/utils/constants';
 
 export const Base = () => {
   const { width, height } = useWindowDimensions();

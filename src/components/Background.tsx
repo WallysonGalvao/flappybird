@@ -1,7 +1,8 @@
-import { Image, useImage } from "@shopify/react-native-skia";
-import { useWindowDimensions } from "react-native";
+import { useWindowDimensions } from 'react-native';
 
-import bgImg from "@app/assets/sprites/background-day.png";
+import { Image, useImage } from '@shopify/react-native-skia';
+
+import bgImg from '@app/assets/sprites/background-day.png';
 
 export const Background = () => {
   const { width, height } = useWindowDimensions();

@@ -1,11 +1,12 @@
-import { Canvas, Image, useImage } from "@shopify/react-native-skia";
+import { useEffect } from 'react';
+import { useWindowDimensions } from 'react-native';
 
-import { useWindowDimensions } from "react-native";
-
-import pipeBottomImg from "./assets/sprites/pipe-green.png";
-import pipeTopImg from "./assets/sprites/pipe-green-top.png";
-
-import { GRAVITY, JUMP_FORCE, PIPE_SIZE } from "./utils/constants";
+import { Canvas } from '@shopify/react-native-skia';
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 import {
   Easing,
   Extrapolation,
@@ -16,22 +17,13 @@ import {
   withRepeat,
   withSequence,
   withTiming,
-} from "react-native-reanimated";
-import { useEffect } from "react";
-import {
-  Gesture,
-  GestureDetector,
-  GestureHandlerRootView,
-} from "react-native-gesture-handler";
-import { Background, Bird, Base } from "./components";
+} from 'react-native-reanimated';
+
+import { Background, Base, Bird, Pipes } from './components';
+import { GRAVITY, JUMP_FORCE } from './utils/constants';
 
 export default function App() {
   const { width, height } = useWindowDimensions();
-
-  const pipeBottom = useImage(pipeBottomImg);
-  const pipeTop = useImage(pipeTopImg);
-
-  const pipeOffset = 10;
 
   const x = useSharedValue(width - 50);
 
@@ -45,13 +37,10 @@ export default function App() {
           birdYVelocity.value,
           [-500, 500],
           [-0.5, 0.5],
-          Extrapolation.CLAMP
+          Extrapolation.CLAMP,
         ),
       },
     ];
-  });
-  const birdOrigin = useDerivedValue(() => {
-    return { x: width / 4 + 32, y: birdY.value + 24 };
   });
 
   const gesture = Gesture.Tap().onStart(() => {
@@ -59,7 +48,9 @@ export default function App() {
   });
 
   useFrameCallback(({ timeSincePreviousFrame: dt }) => {
-    if (!dt) return;
+    if (!dt) {
+      return;
+    }
 
     birdY.value = birdY.value + (birdYVelocity.value * dt) / 1000;
     birdYVelocity.value = birdYVelocity.value + (GRAVITY * dt) / 1000;
@@ -69,9 +60,9 @@ export default function App() {
     x.value = withRepeat(
       withSequence(
         withTiming(-150, { duration: 3000, easing: Easing.linear }),
-        withTiming(width, { duration: 0 })
+        withTiming(width, { duration: 0 }),
       ),
-      -1
+      -1,
     );
   }, []);
 
@@ -83,26 +74,13 @@ export default function App() {
           <Background />
 
           {/* Pipes */}
-          <Image
-            image={pipeTop}
-            y={pipeOffset - 320}
-            x={x}
-            width={PIPE_SIZE.width}
-            height={PIPE_SIZE.height}
-          />
-          <Image
-            image={pipeBottom}
-            y={height - 320 + pipeOffset}
-            x={x}
-            width={PIPE_SIZE.width}
-            height={PIPE_SIZE.height}
-          />
+          <Pipes x={x} />
 
           {/* Base */}
           <Base />
 
           {/* Bird */}
-          <Bird transform={birdTransform} origin={birdOrigin} y={birdY} />
+          <Bird transform={birdTransform} y={birdY} />
         </Canvas>
       </GestureDetector>
     </GestureHandlerRootView>
