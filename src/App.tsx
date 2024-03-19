@@ -8,36 +8,81 @@ import {
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import {
+  cancelAnimation,
   Easing,
+  interpolate,
   runOnJS,
   useAnimatedReaction,
+  useDerivedValue,
   useFrameCallback,
   useSharedValue,
-  withRepeat,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
 import { Background, Base, Bird, Pipes, Score } from './components';
-import { GRAVITY, JUMP_FORCE } from './utils/constants';
+import { GRAVITY, JUMP_FORCE, PIPE_SIZE } from './utils/constants';
+import { isPointCollidingWithRect, restartGame } from './utils/worklet';
 
 export default function App() {
   const { width, height } = useWindowDimensions();
   const [score, setScore] = useState(0);
 
-  const x = useSharedValue(width - 50);
+  const gameOver = useSharedValue(false);
+  const pipeX = useSharedValue(width);
 
   const birdY = useSharedValue(height / 3);
-  const birdYVelocity = useSharedValue(100);
+  const birdX = width / 4;
+  const birdYVelocity = useSharedValue(0);
 
-  const gesture = Gesture.Tap().onStart(() => {
-    birdYVelocity.value = JUMP_FORCE;
+  const pipeOffset = useSharedValue(0);
+  const topPipeY = useDerivedValue(() => pipeOffset.value - 320);
+  const bottomPipeY = useDerivedValue(() => height - 320 + pipeOffset.value);
+
+  const pipesSpeed = useDerivedValue(() => {
+    return interpolate(score, [0, 20], [1, 2]);
   });
 
+  const obstacles = useDerivedValue(() => [
+    // bottom pipe
+    {
+      x: pipeX.value,
+      y: bottomPipeY.value,
+      h: PIPE_SIZE.height,
+      w: PIPE_SIZE.width,
+    },
+    // top pipe
+    {
+      x: pipeX.value,
+      y: topPipeY.value,
+      h: PIPE_SIZE.height,
+      w: PIPE_SIZE.width,
+    },
+  ]);
+
+  const moveTheMap = () => {
+    pipeX.value = withSequence(
+      withTiming(width, { duration: 0 }),
+      withTiming(-150, {
+        duration: 3000 / pipesSpeed.value,
+        easing: Easing.linear,
+      }),
+      withTiming(width, { duration: 0 }),
+    );
+  };
+
+  // Scoring system
   useAnimatedReaction(
-    () => x.value,
+    () => pipeX.value,
     (currentValue, previousValue) => {
-      const middle = width / 2;
+      const middle = birdX;
+
+      // change offset for the position of the next gap
+      if (previousValue && currentValue < -100 && previousValue > -100) {
+        pipeOffset.value = Math.random() * 400 - 200;
+        cancelAnimation(pipeX);
+        runOnJS(moveTheMap)();
+      }
 
       if (
         currentValue !== previousValue &&
@@ -50,8 +95,41 @@ export default function App() {
     },
   );
 
+  // Collision detection
+  useAnimatedReaction(
+    () => birdY.value,
+    currentValue => {
+      const center = {
+        x: birdX + 32,
+        y: birdY.value + 24,
+      };
+
+      // Ground collision detection
+      if (currentValue > height - 100 || currentValue < 0) {
+        gameOver.value = true;
+      }
+
+      const isColliding = obstacles.value.some(rect =>
+        isPointCollidingWithRect(center, rect),
+      );
+
+      if (isColliding) {
+        gameOver.value = true;
+      }
+    },
+  );
+
+  useAnimatedReaction(
+    () => gameOver.value,
+    (currentValue, previousValue) => {
+      if (currentValue && !previousValue) {
+        cancelAnimation(pipeX);
+      }
+    },
+  );
+
   useFrameCallback(({ timeSincePreviousFrame: dt }) => {
-    if (!dt) {
+    if (!dt || gameOver.value) {
       return;
     }
 
@@ -59,14 +137,25 @@ export default function App() {
     birdYVelocity.value = birdYVelocity.value + (GRAVITY * dt) / 1000;
   });
 
+  const gesture = Gesture.Tap().onStart(() => {
+    if (gameOver.value) {
+      restartGame({
+        w: width,
+        h: height,
+        x: pipeX,
+        y: birdY,
+        velocity: birdYVelocity,
+        gameOver,
+        moveTheMap,
+        setScore,
+      });
+    } else {
+      birdYVelocity.value = JUMP_FORCE;
+    }
+  });
+
   useEffect(() => {
-    x.value = withRepeat(
-      withSequence(
-        withTiming(-150, { duration: 3000, easing: Easing.linear }),
-        withTiming(width, { duration: 0 }),
-      ),
-      -1,
-    );
+    moveTheMap();
   }, []);
 
   return (
@@ -77,7 +166,7 @@ export default function App() {
           <Background />
 
           {/* Pipes */}
-          <Pipes x={x} />
+          <Pipes x={pipeX} yTop={topPipeY} yBottom={bottomPipeY} />
 
           {/* Base */}
           <Base />

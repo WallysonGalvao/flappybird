@@ -1,5 +1,3 @@
-import { useWindowDimensions } from 'react-native';
-
 import { Image, useImage } from '@shopify/react-native-skia';
 import { SharedValue } from 'react-native-reanimated';
 
@@ -7,15 +5,13 @@ import pipeTopImg from '@app/assets/sprites/pipe-green-top.png';
 import pipeBottomImg from '@app/assets/sprites/pipe-green.png';
 import { PIPE_SIZE } from '@app/utils/constants';
 
-const pipeOffset = 10;
-
 type PipesProps = {
   x: SharedValue<number>;
+  yTop: SharedValue<number>;
+  yBottom: SharedValue<number>;
 };
 
-export const Pipes = ({ x }: PipesProps) => {
-  const { height } = useWindowDimensions();
-
+export const Pipes = ({ x, yTop, yBottom }: PipesProps) => {
   const pipeBottom = useImage(pipeBottomImg);
   const pipeTop = useImage(pipeTopImg);
 
@@ -23,14 +19,14 @@ export const Pipes = ({ x }: PipesProps) => {
     <>
       <Image
         image={pipeTop}
-        y={pipeOffset - 320}
+        y={yTop}
         x={x}
         width={PIPE_SIZE.width}
         height={PIPE_SIZE.height}
       />
       <Image
         image={pipeBottom}
-        y={height - 320 + pipeOffset}
+        y={yBottom}
         x={x}
         width={PIPE_SIZE.width}
         height={PIPE_SIZE.height}

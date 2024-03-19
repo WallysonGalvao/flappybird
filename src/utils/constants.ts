@@ -7,7 +7,7 @@ export const BIRD_SIZE = {
 } as const;
 
 export const PIPE_SIZE = {
-  width: 103,
+  width: 104,
   height: 640,
 } as const;
 
